@@ -11,7 +11,7 @@ from telegram.ext import Application, CommandHandler
 
 import config
 from src import handlers
-from src.alerts import check_alerts
+from src.alerts import check_alerts, check_wallets
 from src.storage import Storage
 
 logging.basicConfig(
@@ -33,9 +33,15 @@ def main() -> None:
     application.add_handler(CommandHandler("track", handlers.track))
     application.add_handler(CommandHandler("alerts", handlers.alerts))
     application.add_handler(CommandHandler("untrack", handlers.untrack))
+    application.add_handler(CommandHandler("watch", handlers.watch))
+    application.add_handler(CommandHandler("wallets", handlers.wallets))
+    application.add_handler(CommandHandler("unwatch", handlers.unwatch))
 
     application.job_queue.run_repeating(
         check_alerts, interval=config.CHECK_INTERVAL_SECONDS, first=10
+    )
+    application.job_queue.run_repeating(
+        check_wallets, interval=config.WALLET_CHECK_INTERVAL_SECONDS, first=20
     )
 
     logger.info("Bot started. Press Ctrl+C to stop.")

@@ -14,9 +14,11 @@ API keys required.
 
 - **Instant prices** — `/price SOL`, `/price BONK`, or paste any mint address.
 - **Smart alerts** — `/track SOL above 200` notifies you the moment it triggers.
-- **Persistent** — alerts survive restarts (stored in SQLite).
+- **Wallet tracking** — `/watch <address>` pings you on any new wallet activity,
+  with a Solscan link (and "swapped X for Y" descriptions if a Helius key is set).
+- **Persistent** — alerts and watched wallets survive restarts (SQLite).
 - **Efficient** — batches price lookups so 100 users tracking SOL = 1 API call.
-- **Free data source** — uses the public DexScreener API (no key, no cost).
+- **Free data sources** — public DexScreener + Solana RPC (no keys required).
 - **Handles micro-cap prices** — formats values like `$0.0000123` correctly.
 
 ## 🧰 Commands
@@ -27,6 +29,9 @@ API keys required.
 | `/track <token> above\|below <price>` | Set a price alert |
 | `/alerts` | List your active alerts |
 | `/untrack <id>` | Remove an alert |
+| `/watch <address> [label]` | Watch a wallet for new activity |
+| `/wallets` | List watched wallets |
+| `/unwatch <id>` | Stop watching a wallet |
 | `/help` | Show help |
 
 ## 🚀 Setup (5 minutes)
@@ -55,9 +60,10 @@ bot.py            # entry point — wires handlers + the alert checker
 config.py         # environment configuration
 src/
   prices.py       # DexScreener price lookups (by symbol or mint address)
-  storage.py      # SQLite persistence for alerts
+  wallet.py       # Solana RPC wallet activity tracking (+ optional Helius enrich)
+  storage.py      # SQLite persistence for alerts and watched wallets
   handlers.py     # Telegram command handlers
-  alerts.py       # background job that fires triggered alerts
+  alerts.py       # background jobs: price alerts + wallet activity
 ```
 
 ## ☁️ Deployment

@@ -6,22 +6,25 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
-from . import prices
+from . import prices, wallet
 from .storage import Storage
 
 WELCOME = (
-    "👋 *Solana Price Alert Bot*\n\n"
-    "I track Solana token prices and ping you the moment they cross a target.\n\n"
-    "*Commands*\n"
+    "👋 *Solana Price Alert & Wallet Bot*\n\n"
+    "I track Solana token prices *and* wallet activity, and ping you in real time.\n\n"
+    "*Price commands*\n"
     "• `/price <token>` — current price (symbol or mint address)\n"
-    "• `/track <token> above|below <price>` — set an alert\n"
+    "• `/track <token> above|below <price>` — set a price alert\n"
     "• `/alerts` — list your active alerts\n"
-    "• `/untrack <id>` — remove an alert\n"
-    "• `/help` — show this message\n\n"
+    "• `/untrack <id>` — remove an alert\n\n"
+    "*Wallet commands*\n"
+    "• `/watch <address> [label]` — get pinged on new wallet activity\n"
+    "• `/wallets` — list watched wallets\n"
+    "• `/unwatch <id>` — stop watching a wallet\n\n"
     "*Examples*\n"
     "`/price BONK`\n"
     "`/track SOL above 200`\n"
-    "`/track BONK below 0.000015`"
+    "`/watch 7xKX...9fG2 whale1`"
 )
 
 
@@ -148,3 +151,65 @@ async def untrack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(f"🗑️ Removed alert #{alert_id}.")
     else:
         await update.message.reply_text(f"No alert #{alert_id} found for you.")
+
+
+async def watch(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not context.args:
+        await update.message.reply_text(
+            "Usage: `/watch <wallet_address> [label]`", parse_mode=ParseMode.MARKDOWN
+        )
+        return
+
+    address = context.args[0]
+    if not wallet.is_solana_address(address):
+        await update.message.reply_text("That doesn't look like a valid Solana wallet address.")
+        return
+
+    label = " ".join(context.args[1:]).strip()
+
+    # Baseline at the current newest tx so we only alert on *future* activity.
+    try:
+        baseline = await wallet.latest_signature(address)
+    except Exception:
+        await update.message.reply_text("⚠️ Couldn't reach the Solana network. Try again shortly.")
+        return
+
+    wallet_id = _storage(context).add_wallet(
+        chat_id=update.effective_chat.id, address=address, label=label, last_signature=baseline
+    )
+    name = f" ({label})" if label else ""
+    await update.message.reply_text(
+        f"👀 Now watching wallet *#{wallet_id}*{name}.\n"
+        f"`{address}`\n"
+        "I'll ping you on new activity.",
+        parse_mode=ParseMode.MARKDOWN,
+    )
+
+
+async def wallets(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    rows = _storage(context).list_wallets(update.effective_chat.id)
+    if not rows:
+        await update.message.reply_text("You're not watching any wallets. Add one with `/watch`.",
+                                        parse_mode=ParseMode.MARKDOWN)
+        return
+    lines = []
+    for w in rows:
+        name = f" — {w.label}" if w.label else ""
+        short = f"{w.address[:4]}...{w.address[-4:]}"
+        lines.append(f"*#{w.id}*{name}  `{short}`")
+    await update.message.reply_text(
+        "*Watched wallets*\n" + "\n".join(lines) + "\n\nRemove with `/unwatch <id>`.",
+        parse_mode=ParseMode.MARKDOWN,
+    )
+
+
+async def unwatch(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not context.args or not context.args[0].isdigit():
+        await update.message.reply_text("Usage: `/unwatch <id>`", parse_mode=ParseMode.MARKDOWN)
+        return
+    wallet_id = int(context.args[0])
+    removed = _storage(context).remove_wallet(update.effective_chat.id, wallet_id)
+    if removed:
+        await update.message.reply_text(f"🗑️ Stopped watching wallet #{wallet_id}.")
+    else:
+        await update.message.reply_text(f"No watched wallet #{wallet_id} found for you.")

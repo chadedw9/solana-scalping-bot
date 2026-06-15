@@ -19,6 +19,16 @@ CREATE TABLE IF NOT EXISTS alerts (
     target_price REAL    NOT NULL,
     created_at   TEXT    NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS wallets (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id        INTEGER NOT NULL,
+    address        TEXT    NOT NULL,
+    label          TEXT    NOT NULL DEFAULT '',
+    last_signature TEXT,
+    created_at     TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (chat_id, address)
+);
 """
 
 
@@ -30,6 +40,15 @@ class Alert:
     symbol: str
     direction: str
     target_price: float
+
+
+@dataclass
+class Wallet:
+    id: int
+    chat_id: int
+    address: str
+    label: str
+    last_signature: str | None
 
 
 class Storage:
@@ -80,4 +99,58 @@ class Storage:
             symbol=row["symbol"],
             direction=row["direction"],
             target_price=row["target_price"],
+        )
+
+    # --- Wallet tracking ---
+
+    def add_wallet(self, chat_id: int, address: str, label: str, last_signature: str | None) -> int:
+        """Insert (or update) a watched wallet. Returns its row id.
+
+        Re-watching the same address just refreshes the label/baseline rather
+        than creating a duplicate.
+        """
+        self._conn.execute(
+            "INSERT INTO wallets (chat_id, address, label, last_signature) "
+            "VALUES (?, ?, ?, ?) "
+            "ON CONFLICT (chat_id, address) DO UPDATE SET "
+            "label = excluded.label, last_signature = excluded.last_signature",
+            (chat_id, address, label, last_signature),
+        )
+        self._conn.commit()
+        row = self._conn.execute(
+            "SELECT id FROM wallets WHERE chat_id = ? AND address = ?", (chat_id, address)
+        ).fetchone()
+        return int(row["id"])
+
+    def list_wallets(self, chat_id: int) -> list[Wallet]:
+        rows = self._conn.execute(
+            "SELECT * FROM wallets WHERE chat_id = ? ORDER BY id", (chat_id,)
+        ).fetchall()
+        return [self._row_to_wallet(r) for r in rows]
+
+    def all_wallets(self) -> list[Wallet]:
+        rows = self._conn.execute("SELECT * FROM wallets ORDER BY id").fetchall()
+        return [self._row_to_wallet(r) for r in rows]
+
+    def remove_wallet(self, chat_id: int, wallet_id: int) -> bool:
+        cur = self._conn.execute(
+            "DELETE FROM wallets WHERE id = ? AND chat_id = ?", (wallet_id, chat_id)
+        )
+        self._conn.commit()
+        return cur.rowcount > 0
+
+    def update_wallet_signature(self, wallet_id: int, last_signature: str | None) -> None:
+        self._conn.execute(
+            "UPDATE wallets SET last_signature = ? WHERE id = ?", (last_signature, wallet_id)
+        )
+        self._conn.commit()
+
+    @staticmethod
+    def _row_to_wallet(row: sqlite3.Row) -> Wallet:
+        return Wallet(
+            id=row["id"],
+            chat_id=row["chat_id"],
+            address=row["address"],
+            label=row["label"],
+            last_signature=row["last_signature"],
         )
