@@ -62,9 +62,9 @@ src/
 
 ## ☁️ Deployment
 
-Runs anywhere Python runs. For 24/7 uptime, deploy to a small VPS, Railway,
-Render, or Fly.io and keep `python bot.py` running (e.g. via `systemd`,
-`pm2`, or a Docker container).
+Runs anywhere Python runs. For 24/7 uptime (and a public demo link you can put
+in your gigs/proposals), follow **[DEPLOY.md](DEPLOY.md)** — step-by-step guides
+for Railway (easiest), Render, and a VPS, plus a ready-to-use `Dockerfile`.
 
 ## 🛣️ Extending it
 

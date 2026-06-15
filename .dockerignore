@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env
+*.db
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+marketing/
+README.md
+DEPLOY.md
