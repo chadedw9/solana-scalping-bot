@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Meet Your AI Companion</title>
+  <style>
+    :root {
+      --bg: #0e0b1a;
+      --card: #181230;
+      --accent: #ff4d8d;
+      --accent-2: #8b5cf6;
+      --text: #f4f1ff;
+      --muted: #b9b2d6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #241a44 0%, var(--bg) 60%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      max-width: 440px;
+      width: 100%;
+      padding: 36px 28px;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid rgba(255, 77, 141, 0.4);
+      border-radius: 999px;
+      padding: 5px 12px;
+      margin-bottom: 22px;
+    }
+    h1 {
+      font-size: 27px;
+      line-height: 1.25;
+      margin-bottom: 14px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subhead { color: var(--muted); font-size: 16px; line-height: 1.5; margin-bottom: 26px; }
+    ul.benefits { list-style: none; text-align: left; margin: 0 auto 28px; max-width: 320px; }
+    ul.benefits li {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 15px; color: var(--text); padding: 8px 0;
+    }
+    ul.benefits li::before { content: "✦"; color: var(--accent); font-size: 14px; }
+    .cta {
+      display: block; width: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: #fff; font-size: 18px; font-weight: 700;
+      border: none; border-radius: 14px; padding: 16px 20px;
+      cursor: pointer; text-decoration: none;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      box-shadow: 0 10px 30px rgba(255, 77, 141, 0.35);
+    }
+    .cta:hover { transform: translateY(-2px); box-shadow: 0 14px 38px rgba(255, 77, 141, 0.5); }
+    .legal { margin-top: 20px; font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .legal a { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <span class="badge">18+ · AI Companions</span>
+    <h1 id="headline">Meet an AI companion who actually remembers you</h1>
+    <p class="subhead" id="subhead">
+      Chat, connect, and get to know AI personalities built to feel real — free to start.
+    </p>
+    <ul class="benefits">
+      <li>Natural conversations, available 24/7</li>
+      <li>Personalities that remember what you tell them</li>
+      <li>Private, judgment-free, on your terms</li>
+    </ul>
+    <a class="cta" id="cta" href="#" rel="nofollow noopener">Start chatting free</a>
+    <p class="legal">
+      You must be 18 or older. By continuing you agree to the destination site's
+      terms. This is a promotional page; we may earn a commission.
+    </p>
+  </main>
+
+  <script>
+    // Pick the A/B variant from ?v= and pass sub/src/v through to the tracker.
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var variant = (params.get('v') || 'a').toLowerCase();
+
+      var variants = {
+        a: {
+          headline: 'Meet an AI companion who actually remembers you',
+          subhead: 'Chat, connect, and get to know AI personalities built to feel real — free to start.',
+          cta: 'Start chatting free'
+        },
+        b: {
+          headline: 'Your AI girlfriend is waiting',
+          subhead: 'Real conversations, your pace, your rules. Create your match in under a minute.',
+          cta: 'Create your match'
+        }
+      };
+      var v = variants[variant] || variants.a;
+      document.getElementById('headline').textContent = v.headline;
+      document.getElementById('subhead').textContent = v.subhead;
+      document.getElementById('cta').textContent = v.cta;
+
+      // Forward attribution params to the tracker redirect.
+      var go = new URLSearchParams();
+      go.set('sub', params.get('sub') || params.get('clickid') || 'nosub');
+      go.set('src', params.get('src') || params.get('utm_source') || 'direct');
+      go.set('v', variant);
+      if (params.get('geo')) go.set('geo', params.get('geo'));
+      document.getElementById('cta').href = '/go?' + go.toString();
+    })();
+  </script>
+</body>
+</html>

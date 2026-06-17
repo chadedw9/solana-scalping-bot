@@ -1,0 +1,18 @@
+{
+  "name": "swipey-affiliate-funnel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bridge lander + click tracker for the Swipey.ai affiliate paid-traffic test funnel",
+  "type": "commonjs",
+  "main": "tracker/server.js",
+  "scripts": {
+    "start": "node tracker/server.js",
+    "smoke": "node tracker/smoke-test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
